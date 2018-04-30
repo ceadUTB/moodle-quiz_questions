@@ -7,3 +7,4 @@
  */
 
 $string['pluginname'] = 'Questions Report';
+$string['questions_report'] = 'Questions Report';
