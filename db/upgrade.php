@@ -1,9 +1,9 @@
 <?php
 
 /**
- * @package   quiz_questions_report
+ * @package   quiz_questionsreport
  * @copyright 2018 AncaSystems
- * @license   https://github.com/AncaSystems/moodle-questions_report/blob/master/LICENSE Apache 2.0
+ * @license   https://github.com/AncaSystems/moodle-questionsreport/blob/master/LICENSE Apache 2.0
  */
 
  defined('MOODLE_INTERNAL') || die();
@@ -13,6 +13,6 @@
  * @param number $oldversion
  */
  
-function xmldb_quiz_questions_report_upgrade($oldversion) {
+function xmldb_quiz_questionsreport_upgrade($oldversion) {
     return true;
 }
