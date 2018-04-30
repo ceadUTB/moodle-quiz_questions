@@ -7,6 +7,6 @@
  */
 
 $string['pluginname'] = 'Questions Report';
-$string['questionsreport'] = 'Reporte de preguntas';
-$string['questionsreport:componentname'] = 'Questions Report';
-$string['questionsreport:view'] = "Ver reporte de preguntas";
+$string['questions'] = 'Reporte de preguntas';
+$string['questions:componentname'] = 'Questions Report';
+$string['questions:view'] = "Ver reporte de preguntas";

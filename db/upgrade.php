@@ -12,7 +12,7 @@
  * Quiz questions report upgrade function.
  * @param number $oldversion
  */
- 
-function xmldb_quiz_questionsreport_upgrade($oldversion) {
+
+function xmldb_quiz_questions_upgrade($oldversion) {
     return true;
 }

@@ -9,7 +9,6 @@
 defined('MOODLE_INTERNAL') || die();
 
 $capabilities = array(
-    // Is the user allowed to see the student's real names while grading?
     'quiz/questionsreport:view' => array(
         'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,

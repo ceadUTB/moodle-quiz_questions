@@ -9,7 +9,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 
-class quiz_questionsreport extends quiz_default_report{
+class quiz_questions_report extends quiz_default_report{
   protected $course;
   protected $quiz;
   protected $questions;
@@ -17,7 +17,6 @@ class quiz_questionsreport extends quiz_default_report{
   protected $context;
 
   public function display($quiz, $cm, $course) {
-    global $OUTPUT, $DB;
 
     $this->course = $course;
     $this->quiz = $quiz;
@@ -25,7 +24,8 @@ class quiz_questionsreport extends quiz_default_report{
 
     $this->context = context_module::instance($cm->id);
     require_capability('mod/quiz:grade', $this->context);
-    has_capability('quiz/questionsreport:view');
+    $viewCap  = has_capability('quiz/questionsreport:view', $this->context);
+
 
     if (!quiz_has_questions($quiz->id)) {
       $this->print_header_and_tabs($cm, $course, $quiz, 'Questions report');
@@ -33,7 +33,11 @@ class quiz_questionsreport extends quiz_default_report{
       return true;
     }
 
-    // $this->questions = quiz_report_get_significant_questions($quiz);
+    $this->questions = quiz_report_get_significant_questions($quiz);
+
+    $this->print_header_and_tabs($cm, $course, $quiz, 'Questions report');
+
+    
 
     return true;
   }

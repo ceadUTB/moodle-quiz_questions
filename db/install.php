@@ -9,12 +9,12 @@
  defined('MOODLE_INTERNAL') || die();
 
 
-function xmldb_quiz_questionsreport_install(){
+function xmldb_quiz_questions_install(){
   global $DB;
 
 
   $record = new stdClass();
-  $record->name = 'questionsreport';
+  $record->name = 'questions';
   $record->displayorder = 8500;
   $record->capability  = 'quiz/questionsreport:view';
 
