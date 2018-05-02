@@ -16,3 +16,4 @@ $string['question_wrong'] = "Malas";
 $string['question_rightpercent'] = "Porcentaje de respuestas buenas";
 $string['question_wrongpercent'] = "Porcentaje de respuestas malas";
 $string['question_times'] = "N° Veces";
+$string['export'] = "Exportar";

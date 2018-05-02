@@ -16,7 +16,7 @@ class questionreport{
   protected $name;
   protected $times = 0;
 
-  function __construct(string $name, int $times){
+  function __construct( $name, $times){
     $this->name = $name;
     $this->times = $times;
   }

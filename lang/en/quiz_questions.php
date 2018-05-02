@@ -16,3 +16,4 @@ $string['question_wrong'] = "Wrong";
 $string['question_rightpercent'] = "Right answers percent";
 $string['question_wrongpercent'] = "Wrong answers percent";
 $string['question_times'] = "Times";
+$string['export'] = "Export";

@@ -26,6 +26,11 @@ class quiz_questions_report extends quiz_default_report{
     $this->quiz = $quiz;
     $this->cm = $cm;
 
+    $download = optional_param('download','',PARAM_BOOL);
+
+    $options = array('id' => $cm->id, 'mode'=>'questions');
+    $reporturl = new moodle_url('/mod/quiz/report.php', $options);
+
     $this->context = context_module::instance($cm->id);
     require_capability('mod/quiz:grade', $this->context);
     $viewCap  = has_capability('quiz/questionsreport:view', $this->context);
@@ -71,17 +76,17 @@ class quiz_questions_report extends quiz_default_report{
         array_push($this->questionReport, $this->QuestionReport($questiondata,$questionname));
       }
 
-      echo $this->output_question_report_data($this->questionReport);
+      echo $this->output_question_report_data($this->questionReport,$options);
       return true;
     }
 
 
-    redirect(new moodle_url('/course/view.php?id=',array('id'=> $course->id)));
+    redirect(new moodle_url('/course/view.php',array('id'=> $course->id)));
     return true;
   }
 
 
-  private function QuestionReport($questiondata, string $name){
+  private function QuestionReport($questiondata, $name){
     $QuestionReport = new \quiz_questions\questionreport($name,sizeof($questiondata));
     foreach ($questiondata as $data) {
       if ($data == "gradedwrong") {
@@ -94,9 +99,9 @@ class quiz_questions_report extends quiz_default_report{
     return $QuestionReport;
   }
 
-  protected function output_question_report_data($QuestionsReports){
+  protected function output_question_report_data($QuestionsReports,$options){
     $content = html_writer::tag('h3',get_string('questions', 'quiz_questions'));
-    $content.= html_writer::start_tag('div');
+    $content.= html_writer::start_tag('div', array('class' => 'row'));
     $content.= html_writer::start_tag('table',array('class'=>'table table-bordered'));
     $content.= html_writer::start_tag('tr');
     $content.= html_writer::tag('th', get_string('question_name','quiz_questions'));
@@ -118,6 +123,21 @@ class quiz_questions_report extends quiz_default_report{
     }
     $content.= html_writer::end_tag('table');
     $content.= html_writer::end_tag('div');
+
+    // $content.= html_writer::start_tag('div', array('class'=>'row text-center'));
+    // $content.= html_writer::start_tag('div', array('class'=>'span6 offset3'));
+    // // Form to export
+    // $content.= html_writer::start_tag('form', array('class' => 'form-inline', 'method' => 'get', 'action' => new moodle_url('/mod/quiz/report.php')));
+    // $content.= '<input type="number" value="'.$options['id'].'" name="id" class="hidden">';
+    // $content.= '<input type="text" value="'.$options['mode'].'" name="mode" class="hidden">';
+    // $content.= '<input type="text" value="true" name="mode" class="hidden">';
+    // $content.= html_writer::start_tag('select', array('name' => 'type'));
+    // $content.= html_writer::tag('option', 'Excel / XML', array('value'=>'xmls'));
+    // $content.= html_writer::end_tag('select');
+    // $content.= '<input value="'.get_string('export', 'quiz_questions').'" type="submit">';
+    // $content.= html_writer::end_tag('form');
+    // $content.= html_writer::end_tag('div');
+    // $content.= html_writer::end_tag('div');
 
     return $content;
   }
