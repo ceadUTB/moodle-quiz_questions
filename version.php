@@ -8,7 +8,7 @@
 
  defined('MOODLE_INTERNAL') || die();
 
-$plugin->version  = 2018043015;
+$plugin->version  = 2018050206;
 $plugin->requires = 2015050500;
 $plugin->component = 'quiz_questions';
-$plugin->maturity = MATURITY_ALPHA;
+$plugin->maturity = MATURITY_BETA;

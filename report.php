@@ -71,10 +71,13 @@ class quiz_questions_report extends quiz_default_report{
         array_push($this->questionReport, $this->QuestionReport($questiondata,$questionname));
       }
 
+      echo $this->output_question_report_data($this->questionReport);
       return true;
     }
 
-    return false;
+
+    redirect(new moodle_url('/course/view.php?id=',array('id'=> $course->id)));
+    return true;
   }
 
 
@@ -91,7 +94,31 @@ class quiz_questions_report extends quiz_default_report{
     return $QuestionReport;
   }
 
-  protected function output_question_report_data(){
-    global $OUTPUT;
+  protected function output_question_report_data($QuestionsReports){
+    $content = html_writer::tag('h3',get_string('questions', 'quiz_questions'));
+    $content.= html_writer::start_tag('div');
+    $content.= html_writer::start_tag('table',array('class'=>'table table-bordered'));
+    $content.= html_writer::start_tag('tr');
+    $content.= html_writer::tag('th', get_string('question_name','quiz_questions'));
+    $content.= html_writer::tag('th', get_string('question_times','quiz_questions') . '(<i class="fa fa-clock-o times-color" aria-hidden="true"></i>)');
+    $content.= html_writer::tag('th', get_string('question_right','quiz_questions') . '(<i class="fa fa-check right-color" aria-hidden="true"></i>)');
+    $content.= html_writer::tag('th', get_string('question_rightpercent','quiz_questions') . '(<span class="percent-color"><b>%</b></span>)');
+    $content.= html_writer::tag('th', get_string('question_wrong','quiz_questions') . '(<i class="fa fa-times wrong-color" aria-hidden="true"></i>)');
+    $content.= html_writer::tag('th', get_string('question_wrongpercent','quiz_questions') . '(<span class="percent-color"><b>%</b></span>)');
+    $content.= html_writer::end_tag('tr');
+    foreach ($QuestionsReports as $QuestionReport) {
+      $content.= html_writer::start_tag('tr');
+      $content.= html_writer::tag('td', $QuestionReport->get_name());
+      $content.= html_writer::tag('td', $QuestionReport->get_times());
+      $content.= html_writer::tag('td', $QuestionReport->get_right());
+      $content.= html_writer::tag('td', $QuestionReport->RightPercent() . '%');
+      $content.= html_writer::tag('td', $QuestionReport->get_wrong());
+      $content.= html_writer::tag('td', $QuestionReport->WrongPercent() . '%');
+      $content.= html_writer::end_tag('tr');
+    }
+    $content.= html_writer::end_tag('table');
+    $content.= html_writer::end_tag('div');
+
+    return $content;
   }
 }

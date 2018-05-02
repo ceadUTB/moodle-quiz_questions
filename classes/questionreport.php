@@ -56,10 +56,36 @@ class questionreport{
     return $this->times;
   }
 
+  /**
+  * get the number of times that question was show
+  * @return string
+  *
+  */
+  public function get_name(){
+    return $this->name;
+  }
+
   public function set_times(int $times){
     $this->times = $times;
   }
 
+  /**
+  * get the number of times that question was show
+  * @return float
+  *
+  */
+  public function RightPercent(){
+    return $this->right / $this->times;
+  }
+
+  /**
+  * get the number of times that question was show
+  * @return float
+  *
+  */
+  public function WrongPercent(){
+    return $this->wrong / $this->times;
+  }
 
 
 }
