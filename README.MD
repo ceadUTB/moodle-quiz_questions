@@ -6,7 +6,7 @@ Report of questions for a quiz activity; you can see:
 #### How to install
 - GIT Version:
   - In the top-level folder of your Moodle install:
-   -  git clone git@github.com:AncaSystems/moodle-questionsreport.git mod/quiz/report/questions
+   -  git clone git@github.com:AncaSystems/questionsreport.git mod/quiz/report/questions
    - echo '/mod/quiz/report/questions' >> .git/info/exclude
 
 ### How to use
