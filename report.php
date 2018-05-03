@@ -8,6 +8,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once($CFG->dirroot . '/mod/quiz/report/questions/questions_table.php');
 
 class quiz_questions_report extends quiz_default_report{
   protected $course;
@@ -18,15 +19,18 @@ class quiz_questions_report extends quiz_default_report{
   protected $students;
   protected $questionresponse = array();
   protected $questionReport = array();
+  protected $table;
 
   public function display($quiz, $cm, $course) {
-    global $DB;
+    global $DB, $OUTPUT;
+
+    $this->table = new quiz_questions_table();
 
     $this->course = $course;
     $this->quiz = $quiz;
     $this->cm = $cm;
 
-    $download = optional_param('download','',PARAM_BOOL);
+    $download = optional_param('download', '', PARAM_ALPHA);
 
     $options = array('id' => $cm->id, 'mode'=>'questions');
     $reporturl = new moodle_url('/mod/quiz/report.php', $options);
@@ -45,7 +49,9 @@ class quiz_questions_report extends quiz_default_report{
       // Quiz Questions
       $this->questions = quiz_report_get_significant_questions($quiz);
 
-      $this->print_header_and_tabs($cm, $course, $quiz, 'Questions report');
+      if (!$this->table->is_downloading()) {
+        $this->print_header_and_tabs($cm, $course, $quiz, 'Questions report');
+      }
 
       // get all students
       $this->students = get_role_users(5, $this->context, true);
@@ -76,7 +82,24 @@ class quiz_questions_report extends quiz_default_report{
         array_push($this->questionReport, $this->QuestionReport($questiondata,$questionname));
       }
 
-      echo $this->output_question_report_data($this->questionReport,$options);
+      $this->table->questions_setup($quiz, $cm->id, $reporturl);
+
+      $courseshortname = format_string($course->shortname,true,
+                                        array('context' => context_course::instance($course->id)));
+
+      $filename = quiz_report_download_filename(get_string('questions:componentname','quiz_questions'),$courseshortname,$quiz->name);
+
+      $this->table->is_downloading($download,$filename,
+                                   get_string('questions:componentname', 'quiz_questions'));
+
+      if ($this->table->is_downloading()) {
+        $this->download_questions_report_table($this->questionReport);
+        $this->table->export_class_instance()->finish_document();
+      }else{
+        echo $this->output_question_report_data($this->questionReport,$quiz);
+        echo $this->everything_download_options($reporturl);
+      }
+
       return true;
     }
 
@@ -85,7 +108,9 @@ class quiz_questions_report extends quiz_default_report{
     return true;
   }
 
-
+  /**
+  * Model translate Function
+  */
   private function QuestionReport($questiondata, $name){
     $QuestionReport = new \quiz_questions\questionreport($name,sizeof($questiondata));
     foreach ($questiondata as $data) {
@@ -99,46 +124,59 @@ class quiz_questions_report extends quiz_default_report{
     return $QuestionReport;
   }
 
-  protected function output_question_report_data($QuestionsReports,$options){
-    $content = html_writer::tag('h3',get_string('questions', 'quiz_questions'));
-    $content.= html_writer::start_tag('div', array('class' => 'row'));
-    $content.= html_writer::start_tag('table',array('class'=>'table table-bordered'));
-    $content.= html_writer::start_tag('tr');
-    $content.= html_writer::tag('th', get_string('question_name','quiz_questions'));
-    $content.= html_writer::tag('th', get_string('question_times','quiz_questions') . '(<i class="fa fa-clock-o times-color" aria-hidden="true"></i>)');
-    $content.= html_writer::tag('th', get_string('question_right','quiz_questions') . '(<i class="fa fa-check right-color" aria-hidden="true"></i>)');
-    $content.= html_writer::tag('th', get_string('question_rightpercent','quiz_questions') . '(<span class="percent-color"><b>%</b></span>)');
-    $content.= html_writer::tag('th', get_string('question_wrong','quiz_questions') . '(<i class="fa fa-times wrong-color" aria-hidden="true"></i>)');
-    $content.= html_writer::tag('th', get_string('question_wrongpercent','quiz_questions') . '(<span class="percent-color"><b>%</b></span>)');
-    $content.= html_writer::end_tag('tr');
+  /**
+  * Table Function
+  */
+  protected function output_question_report_data($QuestionsReports){
+    global $OUTPUT;
+    $questioninfotable = new html_table();
+    $questioninfotable->aling = array('center','center');
+    $questioninfotable->width = '60%';
+    $questioninfotable->attributes['class'] = 'table table-bordered titlesleft';
+
+    $questioninfotable->head = array(get_string('question_name','quiz_questions'),
+                                     get_string('question_times','quiz_questions') . '(<i class="fa fa-clock-o times-color" aria-hidden="true"></i>)',
+                                     get_string('question_right','quiz_questions') . '(<i class="fa fa-check right-color" aria-hidden="true"></i>)',
+                                     get_string('question_rightpercent','quiz_questions') . '(<span class="percent-color"><b>%</b></span>)',
+                                     get_string('question_wrong','quiz_questions') . '(<i class="fa fa-times wrong-color" aria-hidden="true"></i>)',
+                                     get_string('question_wrongpercent','quiz_questions') . '(<span class="percent-color"><b>%</b></span>)');
+
+    $questioninfotable->data = array();
     foreach ($QuestionsReports as $QuestionReport) {
-      $content.= html_writer::start_tag('tr');
-      $content.= html_writer::tag('td', $QuestionReport->get_name());
-      $content.= html_writer::tag('td', $QuestionReport->get_times());
-      $content.= html_writer::tag('td', $QuestionReport->get_right());
-      $content.= html_writer::tag('td', $QuestionReport->RightPercent() . '%');
-      $content.= html_writer::tag('td', $QuestionReport->get_wrong());
-      $content.= html_writer::tag('td', $QuestionReport->WrongPercent() . '%');
-      $content.= html_writer::end_tag('tr');
+      $datumfromtable = $this->table->format_row($QuestionReport);
+      $questioninfotable->data[] = $datumfromtable;
     }
-    $content.= html_writer::end_tag('table');
-    $content.= html_writer::end_tag('div');
+    echo $OUTPUT->heading(get_string('questions:componentname', 'quiz_questions'), 3);
+    echo html_writer::table($questioninfotable);
+  }
 
-    // $content.= html_writer::start_tag('div', array('class'=>'row text-center'));
-    // $content.= html_writer::start_tag('div', array('class'=>'span6 offset3'));
-    // // Form to export
-    // $content.= html_writer::start_tag('form', array('class' => 'form-inline', 'method' => 'get', 'action' => new moodle_url('/mod/quiz/report.php')));
-    // $content.= '<input type="number" value="'.$options['id'].'" name="id" class="hidden">';
-    // $content.= '<input type="text" value="'.$options['mode'].'" name="mode" class="hidden">';
-    // $content.= '<input type="text" value="true" name="mode" class="hidden">';
-    // $content.= html_writer::start_tag('select', array('name' => 'type'));
-    // $content.= html_writer::tag('option', 'Excel / XML', array('value'=>'xmls'));
-    // $content.= html_writer::end_tag('select');
-    // $content.= '<input value="'.get_string('export', 'quiz_questions').'" type="submit">';
-    // $content.= html_writer::end_tag('form');
-    // $content.= html_writer::end_tag('div');
-    // $content.= html_writer::end_tag('div');
+  /**
+  * Download button
+  */
+  protected function everything_download_options(moodle_url $reporturl){
+    global $OUTPUT;
+    return $OUTPUT->download_dataformat_selector(get_string('export', 'quiz_questions'),$reporturl->out_omit_querystring(), 'download', $reporturl->params());
+  }
 
-    return $content;
+
+  /**
+  * Download Function
+  */
+  protected function download_questions_report_table($QuestionsReports){
+    if ($this->table->is_downloading() == 'html') {
+      echo $this->output_question_report_data($this->questionReport,$quiz);
+      return;
+    }
+    $row = array();
+    foreach ($QuestionsReports as $QuestionReport) {
+      foreach ($this->table->format_row($QuestionReport) as $heading => $value) {
+        $row[] = $value;
+      }
+    }
+    $exportclass = $this->table->export_class_instance();
+    $exportclass->start_table(get_string('questions:componentname', 'quiz_questions'));
+    $exportclass->output_headers($this->table->headers);
+    $exportclass->add_data($row);
+    $exportclass->finish_table();
   }
 }
