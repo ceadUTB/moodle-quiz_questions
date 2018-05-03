@@ -33,7 +33,7 @@ class quiz_questions_table extends flexible_table{
 
     $this->define_columns($columns);
     $this->define_headers($headers);
-    $this->sortable(flase);
+    $this->sortable(false);
 
     $this->define_baseurl($reporturl->out());
 

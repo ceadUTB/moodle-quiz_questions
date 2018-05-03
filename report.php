@@ -22,51 +22,56 @@ class quiz_questions_report extends quiz_default_report{
   protected $table;
 
   public function display($quiz, $cm, $course) {
-    global $DB, $OUTPUT;
+    global $DB;
 
-    $this->table = new quiz_questions_table();
-
-    $this->course = $course;
-    $this->quiz = $quiz;
-    $this->cm = $cm;
-
-    $download = optional_param('download', '', PARAM_ALPHA);
-
-    $options = array('id' => $cm->id, 'mode'=>'questions');
-    $reporturl = new moodle_url('/mod/quiz/report.php', $options);
-
-    $this->context = context_module::instance($cm->id);
-    require_capability('mod/quiz:grade', $this->context);
-    $viewCap  = has_capability('quiz/questionsreport:view', $this->context);
-
+     $this->context = context_module::instance($cm->id);
+     $download = optional_param('download', '', PARAM_ALPHA);
+     require_capability('mod/quiz:grade', $this->context);
+     $viewCap  = has_capability('quiz/questionsreport:view', $this->context);
 
     if ($viewCap) {
-      if (!quiz_has_questions($quiz->id)) {
-        $this->print_header_and_tabs($cm, $course, $quiz, 'Questions report');
-        echo quiz_no_questions_message($quiz, $cm, $this->context);
-        return true;
-      }
-      // Quiz Questions
-      $this->questions = quiz_report_get_significant_questions($quiz);
+      $this->table = new quiz_questions_table();
 
-      if (!$this->table->is_downloading()) {
-        $this->print_header_and_tabs($cm, $course, $quiz, 'Questions report');
-      }
+      $this->course = $course;
+      $this->quiz = $quiz;
+      $this->cm = $cm;
+
+      $options = array('id' => $cm->id, 'mode'=>'questions');
+      $reporturl = new moodle_url('/mod/quiz/report.php', $options);
+
+      // Table setup
+      $this->table->questions_setup($quiz, $cm->id, $reporturl);
+
+      $courseshortname = format_string($course->shortname,true,
+                                        array('context' => context_course::instance($course->id)));
+
+      $filename = quiz_report_download_filename(get_string('questions:componentname','quiz_questions'),$courseshortname,$quiz->name);
+
+      $this->table->is_downloading($download,$filename,
+                                   get_string('questions:componentname', 'quiz_questions'));
+
+      if (!quiz_has_questions($quiz->id)) {
+         $this->print_header_and_tabs($cm, $course, $quiz, 'Questions report');
+         echo quiz_no_questions_message($quiz, $cm, $this->context);
+         return true;
+       }
+       // Quiz Questions
+      $this->questions = quiz_report_get_significant_questions($quiz);
 
       // get all students
       $this->students = get_role_users(5, $this->context, true);
 
       foreach ($this->questions as $question) {
         foreach ($this->students as $student) {
-          $response = $DB->get_records_sql('SELECT qas.state AS response, q.name AS question_name FROM {question_attempt_steps} qas
+          $response = $DB->get_records_sql('SELECT qas.state as response, q.name AS question_name FROM {question_attempt_steps} qas
             JOIN {question_attempts} qa ON qa.id = qas.questionattemptid
             JOIN {question} q ON q.id = '.$question->id.'
             JOIN {question_usages} qu ON qu.contextid ='.$this->context->id.'
-            WHERE qas.userid = '. $student->id .' AND (qas.state = "gradedwrong" OR qas.state = "gradedright") ORDER BY q.id');
+            WHERE qas.userid = '. $student->id .' AND qas.state IN ("gradedwrong", "gradedright") GROUP BY qas.state ORDER BY q.id ');
 
             if (sizeof($response)>0) {
                 foreach ($response as $data) {
-                  if (sizeof($this->questionresponse[$data->question_name])>0 ) {
+                  if (array_key_exists($data->question_name,$this->questionresponse)) {
                     array_push($this->questionresponse[$data->question_name], $data->response );
                   }else{
                     $this->questionresponse[$data->question_name] = array();
@@ -82,30 +87,20 @@ class quiz_questions_report extends quiz_default_report{
         array_push($this->questionReport, $this->QuestionReport($questiondata,$questionname));
       }
 
-      $this->table->questions_setup($quiz, $cm->id, $reporturl);
-
-      $courseshortname = format_string($course->shortname,true,
-                                        array('context' => context_course::instance($course->id)));
-
-      $filename = quiz_report_download_filename(get_string('questions:componentname','quiz_questions'),$courseshortname,$quiz->name);
-
-      $this->table->is_downloading($download,$filename,
-                                   get_string('questions:componentname', 'quiz_questions'));
-
       if ($this->table->is_downloading()) {
         $this->download_questions_report_table($this->questionReport);
         $this->table->export_class_instance()->finish_document();
       }else{
-        echo $this->output_question_report_data($this->questionReport,$quiz);
-        echo $this->everything_download_options($reporturl);
+          if (!$this->table->is_downloading()) {
+             $this->print_header_and_tabs($cm, $course, $quiz, 'Questions report');
+          }
+         echo $this->output_question_report_data($this->questionReport,$quiz);
+         echo $this->everything_download_options($reporturl);
+
       }
-
-      return true;
-    }
+     }
 
 
-    redirect(new moodle_url('/course/view.php',array('id'=> $course->id)));
-    return true;
   }
 
   /**
@@ -167,16 +162,19 @@ class quiz_questions_report extends quiz_default_report{
       echo $this->output_question_report_data($this->questionReport,$quiz);
       return;
     }
-    $row = array();
-    foreach ($QuestionsReports as $QuestionReport) {
-      foreach ($this->table->format_row($QuestionReport) as $heading => $value) {
-        $row[] = $value;
-      }
-    }
+
     $exportclass = $this->table->export_class_instance();
     $exportclass->start_table(get_string('questions:componentname', 'quiz_questions'));
     $exportclass->output_headers($this->table->headers);
-    $exportclass->add_data($row);
+
+    foreach ($QuestionsReports as $QuestionReport) {
+      $row = array();
+      foreach ($this->table->format_row($QuestionReport) as $heading => $value) {
+        $row[] = $value;
+      }
+      $exportclass->add_data($row);
+    }
+
     $exportclass->finish_table();
   }
 }
