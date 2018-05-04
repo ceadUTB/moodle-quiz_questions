@@ -64,16 +64,16 @@ class quiz_questions_report extends quiz_default_report{
       foreach ($this->questions as $question => $value ) {
        if ($value->type == 'random') {
          $data = $DB->get_record_sql('SELECT q.category FROM {question} q WHERE q.id ='. $value->id);
-
-         $childQuestions = $DB->get_records_sql('SELECT q.id, q.name FROM {question} q WHERE q.category ='. $data->category);
-
+         $childQuestions = $DB->get_records_sql('SELECT q.id, q.name FROM {question} q WHERE q.id <>'.$value->id.' AND q.category ='. $data->category);
          if (sizeof($childQuestions)>0) {
            unset($this->questions[$question]);
-           $this->questions[] = $childQuestions;
+           foreach($childQuestions	as $childquestion){
+             $this->questions[] = $childQuestions;
+           }
          }
        }
       }
-      
+
       // get all students
       $this->students = get_role_users(5, $this->context, true);
 
