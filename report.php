@@ -68,7 +68,7 @@ class quiz_questions_report extends quiz_default_report{
          if (sizeof($childQuestions)>0) {
            unset($this->questions[$question]);
            foreach($childQuestions	as $childquestion){
-             $this->questions[] = $childQuestions;
+             $this->questions[] = $childquestion;
            }
          }
        }
